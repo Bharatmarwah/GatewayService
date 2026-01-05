@@ -1,6 +1,7 @@
 package in.bm.GatewayService.FILTER;
 
 import in.bm.GatewayService.SERVICE.JwtFilter;
+import io.jsonwebtoken.Claims;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
@@ -10,11 +11,11 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @Component
-public class GlobalFilter implements org.springframework.cloud.gateway.filter.GlobalFilter, Ordered {
+public class AuthenticationGlobalFilter implements org.springframework.cloud.gateway.filter.GlobalFilter, Ordered {
 
     private JwtFilter jwtFilter;
 
-    public GlobalFilter(JwtFilter jwtFilter) {
+    public AuthenticationGlobalFilter(JwtFilter jwtFilter) {
         this.jwtFilter = jwtFilter;
     }
 
@@ -33,23 +34,31 @@ public class GlobalFilter implements org.springframework.cloud.gateway.filter.Gl
         }
 
         String token = authHeader.substring(7).trim();
-        if (!jwtFilter.validateToken(token)) {
+
+        Claims claims;
+        try {
+            claims = jwtFilter.parseClaims(token);
+            if (!jwtFilter.validateToken(claims)) {
+                throw new RuntimeException();
+            }
+        } catch (RuntimeException e) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
-        String userID = jwtFilter.extractId(token);
-
-        ServerWebExchange mutatedExchange =  exchange.mutate()
-                .request(r->r
-                        .headers(h->h
-                                .add("X_USER_ID",userID))).build();
+        ServerWebExchange mutatedExchange = exchange.mutate()
+                .request(r -> r
+                        .headers(h -> h
+                                .set("X_USER_ID", claims.getSubject()))).build();
 
         return chain.filter(mutatedExchange);
     }
-    public Boolean publicPath(String path) {
-        return path.startsWith("/") || path.startsWith("/");
 
+    public Boolean publicPath(String path) {
+        return path.startsWith("/auth/otp/send") ||
+                path.startsWith("/auth/otp/verify") ||
+                path.startsWith("/auth/oauth/google") ||
+                path.startsWith("/auth/admin/login");
     }
 
     @Override
