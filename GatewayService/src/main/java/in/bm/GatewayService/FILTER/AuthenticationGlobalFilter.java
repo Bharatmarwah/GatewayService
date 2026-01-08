@@ -6,13 +6,13 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.util.Set;
 
 @Component
 public class AuthenticationGlobalFilter
@@ -20,12 +20,16 @@ public class AuthenticationGlobalFilter
 
     private final JwtFilter jwtFilter;
 
-    private static final Set<String> PUBLIC_PATHS = Set.of(
-            "/auth/otp/send",
-            "/auth/otp/verify",
-            "/auth/oauth/google",
-            "/auth/admin/login"
-    );
+    private boolean isAuthPublicPath(String path) {
+        return path.startsWith("/auth/public/");
+    }
+
+    private boolean isMoviesPublicPath(String path, HttpMethod method) {
+        if (method != HttpMethod.GET) return false;
+
+        return path.startsWith("/movies")
+                || path.startsWith("/movie/movies");
+    }
 
     public AuthenticationGlobalFilter(JwtFilter jwtFilter) {
         this.jwtFilter = jwtFilter;
@@ -35,7 +39,8 @@ public class AuthenticationGlobalFilter
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 
         String path = exchange.getRequest().getURI().getPath();
-        if (isPublicPath(path)) {
+        HttpMethod method = exchange.getRequest().getMethod();
+        if (isAuthPublicPath(path)||isMoviesPublicPath(path,method)) {
             return chain.filter(exchange);
         }
 
@@ -66,9 +71,6 @@ public class AuthenticationGlobalFilter
                 .onErrorResume(JwtException.class, e -> unauthorized(exchange));
     }
 
-    private boolean isPublicPath(String path) {
-        return PUBLIC_PATHS.stream().anyMatch(path::startsWith);
-    }
 
     private Mono<Void> unauthorized(ServerWebExchange exchange) {
         exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
