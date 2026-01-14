@@ -26,9 +26,8 @@ public class AuthenticationGlobalFilter
 
     private boolean isMoviesPublicPath(String path, HttpMethod method) {
         if (method != HttpMethod.GET) return false;
-
         return path.startsWith("/movies")
-                || path.startsWith("/movie/movies");
+                || path.startsWith("/movie/movies") || path.startsWith("/theater/theaters") || path.startsWith("/show/shows");
     }
 
     public AuthenticationGlobalFilter(JwtFilter jwtFilter) {

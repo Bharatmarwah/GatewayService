@@ -33,6 +33,10 @@ public class GatewayRouteConfig {
                                 .filters(f -> f.stripPrefix(1))
                                 .uri("lb://MOVIESERVICE")
                 )
+                .route("shows",
+                        r->r.path("/show/shows/**")
+                                .filters(f->f.stripPrefix(1))
+                                .uri("lb://MOVIESERVICE"))
 
                 .build();
     }
