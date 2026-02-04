@@ -1,10 +1,7 @@
 package in.bm.GatewayService.CONTROLLER;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.Map;
@@ -13,7 +10,15 @@ import java.util.Map;
 @RequestMapping("/fallback")
 public class GatewayFallbackController {
 
-    @GetMapping("/default")
+    @RequestMapping(
+            value = "/default",
+            method = {
+                    RequestMethod.GET,
+                    RequestMethod.POST,
+                    RequestMethod.PUT,
+                    RequestMethod.DELETE
+            }
+    )
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public Map<String, Object> fallback() {
         return Map.of(
