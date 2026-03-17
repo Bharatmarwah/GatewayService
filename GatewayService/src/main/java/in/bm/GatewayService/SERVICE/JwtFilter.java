@@ -11,8 +11,7 @@ import javax.crypto.SecretKey;
 @Service
 public class JwtFilter {
 
-    private static final String SECRET_KEY =
-            "YjkxYTczZDgzN2I2NDk4N2MxZWMyNGUwODZjYmY4YzIyZjQzMDE5OWE2NmQ2N2E5M2Q0MzFjYTFmYzU0MGI3MQ==";
+    private static final String SECRET_KEY = System.getenv("SECRET_KEY");
 
     private static final String ISSUER = "kitflik-auth-service";
 

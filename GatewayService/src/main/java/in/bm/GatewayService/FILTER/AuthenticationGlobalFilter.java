@@ -25,7 +25,8 @@ public class AuthenticationGlobalFilter
     }
 
     private boolean isMoviesPublicPath(String path, HttpMethod method) {
-        if (method != HttpMethod.GET) return false;
+        if (method != HttpMethod.GET)
+            return false;
         return path.startsWith("/movies")
                 || path.startsWith("/movie/movies") || path.startsWith("/theater/theaters") || path.startsWith("/show/shows");
     }
@@ -50,6 +51,8 @@ public class AuthenticationGlobalFilter
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return unauthorized(exchange);
         }
+
+//        String Ip = exchange.getRequest().getRemoteAddress().getAddress().getHostAddress();
 
         String token = authHeader.substring(7);
 
