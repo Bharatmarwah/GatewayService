@@ -2,27 +2,39 @@ package in.bm.GatewayService.SERVICE;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 
 @Service
 public class JwtFilter {
 
-    private static final String SECRET_KEY = System.getenv("SECRET_KEY");
+    private final String publicKey;
+
+    public JwtFilter(@Value("${jwt.public.key}")String publicKey) {
+        this.publicKey = publicKey;
+    }
 
     private static final String ISSUER = "kitflik-auth-service";
 
-    private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
-        return Keys.hmacShaKeyFor(keyBytes);
+    private PublicKey publicKey() {
+        try {
+            byte[] keyByte = Base64.getDecoder().decode(publicKey);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(keyByte);
+            KeyFactory factory = KeyFactory.getInstance("RSA");
+            return factory.generatePublic(spec);
+        }catch (Exception e){
+            throw new RuntimeException("Failed to load public key", e);
+        }
     }
 
     public Claims parseClaims(String token) {
         return Jwts.parser()
-                .verifyWith(getSigningKey())
+                .verifyWith(publicKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
