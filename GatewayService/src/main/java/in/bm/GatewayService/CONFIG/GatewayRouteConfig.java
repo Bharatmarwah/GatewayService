@@ -14,11 +14,7 @@
 
         private final KeyResolver keyResolver;
 
-        private final RedisRateLimiter authRateLimiter;
-        private final RedisRateLimiter movieRateLimiter;
-        private final RedisRateLimiter theaterRateLimiter;
-        private final RedisRateLimiter showRateLimiter;
-        private final RedisRateLimiter bookingRateLimiter;
+        private final RedisRateLimiter defaultRateLimiter;
 
         @Bean
         public RouteLocator gatewayRoutes(RouteLocatorBuilder builder) {
@@ -29,7 +25,7 @@
                             r -> r.path("/auth/public/**")
                                     .filters(f -> f.stripPrefix(1)
                                             .requestRateLimiter(c-> {c.setKeyResolver(keyResolver);
-                                                c.setRateLimiter(authRateLimiter);
+                                                c.setRateLimiter(defaultRateLimiter);
                                             })
                                             .circuitBreaker(c -> c
                                                     .setName("authCB")
@@ -41,7 +37,7 @@
                             r -> r.path("/movie/movies/**")
                                     .filters(f -> f.stripPrefix(1)
                                             .requestRateLimiter(c-> {c.setKeyResolver(keyResolver);
-                                                c.setRateLimiter(movieRateLimiter);
+                                                c.setRateLimiter(defaultRateLimiter);
                                             })
                                             .retry(2)
                                             .circuitBreaker(c -> c
@@ -54,7 +50,7 @@
                             r -> r.path("/theater/theaters/**")
                                     .filters(f -> f.stripPrefix(1).retry(2)
                                             .requestRateLimiter(c-> {c.setKeyResolver(keyResolver);
-                                                c.setRateLimiter(theaterRateLimiter);
+                                                c.setRateLimiter(defaultRateLimiter);
                                             })
                                             .circuitBreaker(c -> c
                                                     .setName("movieCB")
@@ -65,7 +61,7 @@
                             r -> r.path("/show/shows/**")
                                     .filters(f -> f.stripPrefix(1).retry(2)
                                             .requestRateLimiter(c-> {c.setKeyResolver(keyResolver);
-                                                c.setRateLimiter(showRateLimiter);
+                                                c.setRateLimiter(defaultRateLimiter);
                                             })
                                             .circuitBreaker(c -> c
                                                     .setName("movieCB")
@@ -76,7 +72,7 @@
                             r->r.path("/booking/bookings/**")
                                     .filters(f->f.stripPrefix(1)
                                             .requestRateLimiter(c-> {c.setKeyResolver(keyResolver);
-                                                c.setRateLimiter(bookingRateLimiter);
+                                                c.setRateLimiter(defaultRateLimiter);
                                             })
                                             .circuitBreaker(c->c.setName("bookCb").setFallbackUri("forward:/fallback/default")))
                                     .uri("lb://BOOKINGSERVICE"))

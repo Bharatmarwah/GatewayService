@@ -28,49 +28,49 @@ public class AuthenticationGlobalFilter
         if (method != HttpMethod.GET)
             return false;
         return path.startsWith("/movies")
-                || path.startsWith("/movie/movies") || path.startsWith("/theater/theaters") || path.startsWith("/show/shows");
-    }
-
-    public AuthenticationGlobalFilter(JwtFilter jwtFilter) {
-        this.jwtFilter = jwtFilter;
-    }
-
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-
-        String path = exchange.getRequest().getURI().getPath();
-        HttpMethod method = exchange.getRequest().getMethod();
-        if (isAuthPublicPath(path)||isMoviesPublicPath(path,method)) {
-            return chain.filter(exchange);
-        }
-
-        String authHeader = exchange.getRequest()
-                .getHeaders()
-                .getFirst(HttpHeaders.AUTHORIZATION);
-
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return unauthorized(exchange);
-        }
-
-//        String Ip = exchange.getRequest().getRemoteAddress().getAddress().getHostAddress();
-
-        String token = authHeader.substring(7);
-
-        return Mono.fromCallable(() -> jwtFilter.parseClaims(token))
-                .subscribeOn(Schedulers.boundedElastic())
-                .flatMap(claims -> {
-                    if (!jwtFilter.validateToken(claims)) {
-                        return unauthorized(exchange);
-                    }
-
-                    ServerWebExchange mutated = exchange.mutate()
-                            .request(r -> r.headers(h ->
-                                    h.set("x-user-id", claims.getSubject())))
-                            .build();
-
-                    return chain.filter(mutated);
-                })
-                .onErrorResume(JwtException.class, e -> unauthorized(exchange));
+//                || path.startsWith("/movie/movies") || path.startsWith("/theater/theaters") || path.startsWith("/show/shows");
+//    }
+//
+//    public AuthenticationGlobalFilter(JwtFilter jwtFilter) {
+//        this.jwtFilter = jwtFilter;
+//    }
+//
+//    @Override
+//    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+//
+//        String path = exchange.getRequest().getURI().getPath();
+//        HttpMethod method = exchange.getRequest().getMethod();
+//        if (isAuthPublicPath(path)||isMoviesPublicPath(path,method)) {
+//            return chain.filter(exchange);
+//        }
+//
+//        String authHeader = exchange.getRequest()
+//                .getHeaders()
+//                .getFirst(HttpHeaders.AUTHORIZATION);
+//
+//        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+//            return unauthorized(exchange);
+//        }
+//
+////        String Ip = exchange.getRequest().getRemoteAddress().getAddress().getHostAddress();
+//
+//        String token = authHeader.substring(7);
+//
+//        return Mono.fromCallable(() -> jwtFilter.parseClaims(token))
+//                .subscribeOn(Schedulers.boundedElastic())
+//                .flatMap(claims -> {
+//                    if (!jwtFilter.validateToken(claims)) {
+//                        return unauthorized(exchange);
+//                    }
+//
+//                    ServerWebExchange mutated = exchange.mutate()
+//                            .request(r -> r.headers(h ->
+//                                    h.set("x-user-id", claims.getSubject())))
+//                            .build();
+//
+//                    return chain.filter(mutated);
+//                })
+//                .onErrorResume(JwtException.class, e -> unauthorized(exchange));
     }
 
 
