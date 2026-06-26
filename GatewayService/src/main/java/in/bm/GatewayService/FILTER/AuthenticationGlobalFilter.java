@@ -24,6 +24,10 @@ public class AuthenticationGlobalFilter
         return path.startsWith("/auth/public/");
     }
 
+    private boolean isKitflikBot(String path){
+        return path.startsWith("/bot/ask");
+    }
+
     private boolean isMoviesPublicPath(String path, HttpMethod method) {
         if (method != HttpMethod.GET)
             return false;
@@ -41,7 +45,7 @@ public class AuthenticationGlobalFilter
 
         String path = exchange.getRequest().getURI().getPath();
         HttpMethod method = exchange.getRequest().getMethod();
-        if (isAuthPublicPath(path)||isMoviesPublicPath(path,method)) {
+        if (isAuthPublicPath(path)||isMoviesPublicPath(path,method)||isKitflikBot(path)) {
             return chain.filter(exchange);
         }
 
@@ -58,7 +62,7 @@ public class AuthenticationGlobalFilter
         return Mono.fromCallable(() -> jwtFilter.parseClaims(token))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(claims -> {
-                    if (!jwtFilter.validateToken(claims)) {
+                    if (!jwtFilter.validateToken(claims)) { 
                         return unauthorized(exchange);
                     }
 

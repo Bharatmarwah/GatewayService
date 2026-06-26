@@ -13,6 +13,13 @@
     public class GatewayRouteConfig {
 
         private final KeyResolver keyResolver;
+        private final RedisRateLimiter authRateLimiter;
+        private final RedisRateLimiter movieRateLimiter;
+        private final RedisRateLimiter theaterRateLimiter;
+        private final RedisRateLimiter showRateLimiter;
+        private final RedisRateLimiter bookingRateLimiter;
+        private final RedisRateLimiter paymentRateLimiter;
+        private final RedisRateLimiter botRateLimiter;
 
 
         @Bean
@@ -24,7 +31,7 @@
                             r -> r.path("/auth/public/**")
                                     .filters(f -> f.stripPrefix(1)
                                             .requestRateLimiter(c-> {c.setKeyResolver(keyResolver);
-                                                c.setRateLimiter(new RedisRateLimiter(2,5));
+                                                c.setRateLimiter(authRateLimiter);
                                             })
                                             .circuitBreaker(c -> c
                                                     .setName("authCB")
@@ -36,7 +43,7 @@
                             r -> r.path("/movie/movies/**")
                                     .filters(f -> f.stripPrefix(1)
                                             .requestRateLimiter(c-> {c.setKeyResolver(keyResolver);
-                                                c.setRateLimiter(new RedisRateLimiter(50,100));
+                                                c.setRateLimiter(movieRateLimiter);
                                             })
                                             .retry(2)
                                             .circuitBreaker(c -> c
@@ -49,7 +56,7 @@
                             r -> r.path("/theater/theaters/**")
                                     .filters(f -> f.stripPrefix(1).retry(2)
                                             .requestRateLimiter(c-> {c.setKeyResolver(keyResolver);
-                                                c.setRateLimiter(new RedisRateLimiter(20,30));
+                                                c.setRateLimiter(theaterRateLimiter);
                                             })
                                             .circuitBreaker(c -> c
                                                     .setName("movieCB")
@@ -60,7 +67,7 @@
                             r -> r.path("/show/shows/**")
                                     .filters(f -> f.stripPrefix(1).retry(2)
                                             .requestRateLimiter(c-> {c.setKeyResolver(keyResolver);
-                                                c.setRateLimiter(new RedisRateLimiter(20,30));
+                                                c.setRateLimiter(showRateLimiter);
                                             })
                                             .circuitBreaker(c -> c
                                                     .setName("movieCB")
@@ -71,12 +78,33 @@
                             r->r.path("/booking/bookings/**")
                                     .filters(f->f.stripPrefix(1)
                                             .requestRateLimiter(c-> {c.setKeyResolver(keyResolver);
-                                                c.setRateLimiter(new RedisRateLimiter(10,20));
+                                                c.setRateLimiter(bookingRateLimiter);
                                             })
                                             .circuitBreaker(c->c.setName("bookCb").setFallbackUri("forward:/fallback/default")))
                                     .uri("lb://BOOKINGSERVICE"))
 
+                    .route("payment",
+                            r->r.path("/payment/payments/**")
+                                    .filters(f->f.stripPrefix(1)
+                                            .requestRateLimiter(c-> {c.setKeyResolver(keyResolver);
+                                                c.setRateLimiter(paymentRateLimiter);
+                                            })
+                                            .circuitBreaker(c->c.setName("payCb").setFallbackUri("forward:/fallback/default")))
+                                    .uri("lb://PAYMENTSERVICE"))
+
+
+                    .route("bot",
+                            r->r.path("/bot/ask/**")
+                                    .filters(f->f.stripPrefix(1)
+                                            .requestRateLimiter(c-> {c.setKeyResolver(keyResolver);
+                                                c.setRateLimiter(botRateLimiter);
+                                            })
+                                            .circuitBreaker(c->c.setName("botCb").setFallbackUri("forward:/fallback/default")))
+                                    .uri("lb://KITFLIKBOT"))
+
                     .build();
+            
+
         }
     }
 
